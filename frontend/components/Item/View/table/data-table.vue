@@ -25,6 +25,7 @@
   import CardView from "./card-view.vue";
   import DataTableControls from "./data-table-controls.vue";
   import type { Pagination } from "../pagination";
+  import { normalizeLocationPageSize } from "../pagination";
   import Switch from "~/components/ui/switch/Switch.vue";
 
   const props = defineProps<{
@@ -41,7 +42,7 @@
   }>();
 
   const preferences = useViewPreferences();
-  const defaultPageSize = preferences.value.itemsPerTablePage;
+  const defaultPageSize = normalizeLocationPageSize(preferences.value.itemsPerTablePage);
   const tableHeadersData = preferences.value.tableHeaders;
   const defaultVisible = ["name", "quantity", "insured", "purchasePrice"];
 

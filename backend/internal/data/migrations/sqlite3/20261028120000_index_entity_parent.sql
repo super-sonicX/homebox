@@ -4,6 +4,3 @@
 -- entities in the group for each recursion step.
 CREATE INDEX IF NOT EXISTS idx_entities_parent_group
     ON entities (entity_children, group_entities);
-
--- +goose Down
-DROP INDEX IF EXISTS idx_entities_parent_group;

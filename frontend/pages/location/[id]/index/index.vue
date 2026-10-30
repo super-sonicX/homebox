@@ -33,7 +33,12 @@
   import BaseSectionHeader from "@/components/Base/SectionHeader.vue";
   import ItemViewSelectable from "~/components/Item/View/Selectable.vue";
   import { withScopedLocationPath } from "~/components/Item/location-badge";
-  import { clampPageToTotal, isCurrentLocationPage } from "~/components/Item/View/pagination";
+  import {
+    clampPageToTotal,
+    isCurrentLocationPage,
+    locationItemDataKey,
+    normalizeLocationPageSize,
+  } from "~/components/Item/View/pagination";
   import ItemAttachmentsList from "~/components/Item/AttachmentsList.vue";
   import ItemImageDialog from "~/components/Item/ImageDialog.vue";
   import LocationCard from "~/components/Location/Card.vue";
@@ -205,7 +210,7 @@
     return ["direct", "1", "2", "3", "all"].includes(saved) ? saved : "direct";
   });
   const locationPage = ref(1);
-  const locationPageSize = computed(() => Math.min(96, Math.max(1, preferences.value.itemsPerTablePage || 24)));
+  const locationPageSize = computed(() => normalizeLocationPageSize(preferences.value.itemsPerTablePage));
   const descendantTotal = ref(0);
 
   function setDepth(next: unknown) {
@@ -214,12 +219,15 @@
     }
   }
 
-  watch([locationId, depth, locationPageSize], () => {
+  watch([locationId, depth], () => {
     locationPage.value = 1;
   });
+  watch(locationPageSize, () => {
+    if (depth.value !== "direct") locationPage.value = 1;
+  });
 
-  const itemListKey = computed(
-    () => locationId.value + "_item_list_" + depth.value + "_" + locationPage.value + "_" + locationPageSize.value
+  const itemListKey = computed(() =>
+    locationItemDataKey(locationId.value, depth.value, locationPage.value, locationPageSize.value)
   );
   const {
     data: itemList,
@@ -279,8 +287,7 @@
         };
       }
       return { ...response.data, requestKey };
-    },
-    { watch: [locationId, depth, locationPage, locationPageSize] }
+    }
   );
 
   // Nuxt can retain the prior async-data result while a new key loads.
@@ -498,7 +505,7 @@
           </p>
         </div>
         <ItemViewSelectable
-          :key="'location-items-' + locationId + '-' + depth + '-' + locationPage + '-' + locationPageSize"
+          :key="itemListKey"
           :items="items"
           :pagination="depth === 'direct' ? undefined : descendantPagination"
           :disable-sort="depth !== 'direct'"
